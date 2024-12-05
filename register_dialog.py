@@ -20,7 +20,7 @@ class RegisterDialog(QDialog):
         self.username_input.setPlaceholderText("Username")
 
         self.phone_input = QLineEdit()
-        self.phone_input.setPlaceholderText("Phone") -
+        self.phone_input.setPlaceholderText("Phone")
 
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Password")
