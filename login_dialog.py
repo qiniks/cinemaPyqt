@@ -1,20 +1,21 @@
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
+
+from res.styles import AUTH_STYLE, WELCOME_STYLE
 from user import User
 
 
 class LoginDialog(QDialog):
-    def __init__(self, on_success, open_register):
+    def __init__(self, on_success):
         super().__init__()
         self.on_success = on_success
-        self.open_register = open_register
         self.init_ui()
 
     def init_ui(self):
         self.setWindowTitle("Login")
         self.setFixedSize(400, 500)
-
-        layout = QVBoxLayout()
+        self.setStyleSheet(AUTH_STYLE)
 
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Username")
@@ -23,18 +24,19 @@ class LoginDialog(QDialog):
         self.password_input.setPlaceholderText("Password")
         self.password_input.setEchoMode(QLineEdit.Password)
 
-        login_button = QPushButton("Log in")
-        login_button.clicked.connect(self.login)
+        self.login_button = QPushButton("Log in")
+        self.login_button.clicked.connect(self.login)
 
-        register_label = QLabel('Don’t have account?<a href="#">Register</a>')
-        register_label.setAlignment(Qt.AlignCenter)
-        register_label.linkActivated.connect(self.open_register)
+        self.welcome_label = QLabel("WELCOME TO MOVAI")
+        self.welcome_label.setStyleSheet(WELCOME_STYLE)
+        self.welcome_label.setAlignment(Qt.AlignCenter)
 
-        layout.addWidget(QLabel("WELCOME TO MOVAI", alignment=Qt.AlignCenter))
+        layout = QVBoxLayout()
+
+        layout.addWidget(self.welcome_label)
         layout.addWidget(self.username_input)
         layout.addWidget(self.password_input)
-        layout.addWidget(login_button)
-        layout.addWidget(register_label)
+        layout.addWidget(self.login_button)
 
         self.setLayout(layout)
 

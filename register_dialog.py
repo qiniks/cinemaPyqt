@@ -1,5 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
+
+from res.styles import AUTH_STYLE, WELCOME_STYLE
 from user import User  # Убедитесь, что файл user.py существует и корректно импортируется
 
 
@@ -12,6 +14,7 @@ class RegisterDialog(QDialog):
     def init_ui(self):
         self.setWindowTitle("Register")
         self.setFixedSize(400, 500)
+        self.setStyleSheet(AUTH_STYLE)
 
         layout = QVBoxLayout()
 
@@ -26,12 +29,15 @@ class RegisterDialog(QDialog):
         self.password_input.setPlaceholderText("Password")
         self.password_input.setEchoMode(QLineEdit.Password)
 
-        # Кнопка регистрации
+        self.welcome = QLabel("REGISTER TO MOVAI")
+        self.welcome.setStyleSheet(WELCOME_STYLE)
+        self.welcome.setAlignment(Qt.AlignCenter)
+
         register_button = QPushButton("Register")
         register_button.clicked.connect(self.register)
 
         # Добавляем виджеты в layout
-        layout.addWidget(QLabel("REGISTER TO MOVAI", alignment=Qt.AlignCenter))
+        layout.addWidget(self.welcome)
         layout.addWidget(self.username_input)
         layout.addWidget(self.phone_input)
         layout.addWidget(self.password_input)

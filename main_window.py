@@ -1,5 +1,4 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QGridLayout
-from PyQt5.QtCore import Qt
 from movie_card import MovieCard
 from login_dialog import LoginDialog
 from register_dialog import RegisterDialog
@@ -15,7 +14,6 @@ class MainWindow(QWidget):
     def init_ui(self):
         self.setWindowTitle("MOVAI")
         self.setFixedSize(1280, 832)
-        self.setStyleSheet("background-color: white;")
         layout = QVBoxLayout()
 
         # Верхняя панель
@@ -26,17 +24,15 @@ class MainWindow(QWidget):
 
         # Кнопка входа
         self.login_button = QPushButton("Sign In")
-        self.login_button.setStyleSheet("background-color: black; color: white; border-radius: 10px; padding: 10px;")
+        self.login_button.setStyleSheet("color: black; border: 1px solid #ccc; background-color: transparent;")
         self.login_button.clicked.connect(self.open_login)
 
         # Кнопка регистрации
         self.register_button = QPushButton("Sign Up")
-        self.register_button.setStyleSheet("background-color: black; color: white; border-radius: 10px; padding: 10px;")
         self.register_button.clicked.connect(self.open_register)
 
         # Кнопка профиля
         self.profile_button = QPushButton("Профиль")
-        self.profile_button.setStyleSheet("background-color: black; color: white; border-radius: 10px; padding: 10px;")
         self.profile_button.clicked.connect(self.open_profile)
         self.profile_button.hide()  # Скрываем кнопку профиля до входа в аккаунт
 
@@ -49,7 +45,7 @@ class MainWindow(QWidget):
         # Карточки фильмов
         movie_layout = QGridLayout()
         for i in range(200):  # Заглушки для фильмов
-            card = MovieCard(f"Movie {i + 1}", r"C:\Users\talan\PycharmProjects\PLanguage\pyqt\moana.jpeg")
+            card = MovieCard(f"Movie {i + 1}", r"res/moana.jpeg")
             movie_layout.addWidget(card, i // 4, i % 4)
 
         scroll_area = QScrollArea()
@@ -63,7 +59,7 @@ class MainWindow(QWidget):
         self.setLayout(layout)
 
     def open_login(self):
-        dialog = LoginDialog(self.update_user_state, self.open_register)
+        dialog = LoginDialog(self.update_user_state)
         dialog.exec_()
 
     def open_register(self):
@@ -81,3 +77,15 @@ class MainWindow(QWidget):
         """Открывает окно профиля"""
         self.profile_window = ProfileWindow(self.username)
         self.profile_window.show()
+
+    def open_profile(self):
+        """Открывает окно профиля"""
+        self.profile_window = ProfileWindow(self.username, self.logout)
+        self.profile_window.show()
+
+    def logout(self):
+        """Обновляет состояние интерфейса после выхода из аккаунта"""
+        self.username = None
+        self.login_button.show()
+        self.register_button.show()
+        self.profile_button.hide()
