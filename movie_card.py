@@ -11,21 +11,29 @@ class MovieCard(QFrame):
         self.init_ui()
 
     def init_ui(self):
-        self.setFixedSize(220, 320)
+        self.setFixedSize(220, 320)  # Общий размер карточки
+        self.setCursor(Qt.PointingHandCursor)
 
         layout = QVBoxLayout()
-        pixmap = QPixmap(self.image_path).scaled(220, 320, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        layout.setContentsMargins(0, 0, 0, 0)  # Убираем все отступы
 
+        # Картинка
+        pixmap = QPixmap(self.image_path).scaled(220, 320, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
         image_label = QLabel()
         image_label.setPixmap(pixmap)
         image_label.setAlignment(Qt.AlignCenter)
 
+        # Текст с затемнением, перекрывающим нижнюю часть картинки
         text_container = QLabel(self.title)
-        text_container.setFixedSize(220, 50)
+        text_container.setFixedSize(220, 30)
+        text_container.setStyleSheet(
+            "color: white; font-size: 16px; background-color: rgb(200, 100, 255);"
+        )
         text_container.setAlignment(Qt.AlignCenter)
 
         layout.addWidget(image_label)
         layout.addWidget(text_container)
+        layout.setSpacing(0)
         self.setLayout(layout)
 
         self.mousePressEvent = self.on_click

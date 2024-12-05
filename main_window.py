@@ -1,20 +1,31 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QGridLayout
+
+from add_movie_dialog import AddMovieDialog
 from movie_card import MovieCard
-from login_dialog import LoginDialog
-from register_dialog import RegisterDialog
 from profile_window import ProfileWindow
+from remove_movie_dialog import RemoveMovieDialog
 
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.username = None  # Состояние пользователя
+        self.username = None
+        self.is_admin = True  # Флаг для проверки администратора
+        self.movies = [  # Список фильмов
+            {"title": "Movie 1", "image_path": r"res\moana.jpeg"},
+            {"title": "Movie 2", "image_path": r"res\moana.jpeg"},
+            {"title": "Movie 3", "image_path": r"res\moana.jpeg"},
+            {"title": "Movie 4", "image_path": r"res\moana.jpeg"},
+            {"title": "Movie 5", "image_path": r"res\moana.jpeg"}
+        ]
         self.init_ui()
 
     def init_ui(self):
         self.setWindowTitle("MOVAI")
         self.setFixedSize(1280, 832)
         layout = QVBoxLayout()
+
+        layout.setContentsMargins(20, 20, 20, 20)
 
         # Верхняя панель
         self.header = QHBoxLayout()
@@ -36,22 +47,36 @@ class MainWindow(QWidget):
         self.profile_button.clicked.connect(self.open_profile)
         self.profile_button.hide()  # Скрываем кнопку профиля до входа в аккаунт
 
+        # Кнопки "Add" и "Remove" для администратора
+        self.add_button = QPushButton("Add")
+        self.add_button.setStyleSheet("background-color: green; color: white;")
+        self.add_button.clicked.connect(self.open_add_movie_dialog)
+        self.add_button.hide()  # Скрываем кнопку, пока пользователь не админ
+
+        self.remove_button = QPushButton("Remove")
+        self.remove_button.setStyleSheet("background-color: red; color: white;")
+        self.remove_button.clicked.connect(self.open_remove_movie_dialog)
+        self.remove_button.hide()  # Скрываем кнопку, пока пользователь не админ
+
         self.header.addWidget(title_label)
         self.header.addStretch()
         self.header.addWidget(self.login_button)
         self.header.addWidget(self.register_button)
         self.header.addWidget(self.profile_button)
+        self.header.addWidget(self.add_button)
+        self.header.addWidget(self.remove_button)
 
         # Карточки фильмов
-        movie_layout = QGridLayout()
-        for i in range(200):  # Заглушки для фильмов
-            card = MovieCard(f"Movie {i + 1}", r"res/moana.jpeg")
-            movie_layout.addWidget(card, i // 4, i % 4)
+        self.movie_layout = QGridLayout()
+        self.update_movies()
+        # for i in range(200):  # Заглушки для фильмов
+        #     card = MovieCard(f"Movie {i + 1}", r"res/moana.jpeg")
+        #     self.movie_layout.addWidget(card, i // 4, i % 4)
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         container = QWidget()
-        container.setLayout(movie_layout)
+        container.setLayout(self.movie_layout)
         scroll_area.setWidget(container)
 
         layout.addLayout(self.header)
@@ -59,10 +84,12 @@ class MainWindow(QWidget):
         self.setLayout(layout)
 
     def open_login(self):
+        from login_dialog import LoginDialog
         dialog = LoginDialog(self.update_user_state)
         dialog.exec_()
 
     def open_register(self):
+        from register_dialog import RegisterDialog
         dialog = RegisterDialog(self.update_user_state)
         dialog.exec_()
 
@@ -72,6 +99,8 @@ class MainWindow(QWidget):
         self.login_button.hide()
         self.register_button.hide()
         self.profile_button.show()
+        self.add_button.setVisible(self.is_admin)
+        self.remove_button.setVisible(self.is_admin)
 
     def open_profile(self):
         """Открывает окно профиля"""
@@ -89,3 +118,31 @@ class MainWindow(QWidget):
         self.login_button.show()
         self.register_button.show()
         self.profile_button.hide()
+        self.add_button.hide()
+        self.remove_button.hide()
+
+    def open_add_movie_dialog(self):
+        dialog = AddMovieDialog(self.add_movie)
+        dialog.exec_()
+
+    def open_remove_movie_dialog(self):
+        dialog = RemoveMovieDialog(self.movies, self.remove_movie)
+        dialog.exec_()
+
+    def remove_movie(self, title):
+        self.movies = [movie for movie in self.movies if movie["title"] != title]
+        self.update_movies()
+
+    def add_movie(self, title, image_path):
+        self.movies.append({"title": title, "image_path": image_path})
+        self.update_movies()
+
+    def update_movies(self):
+        for i in reversed(range(self.movie_layout.count())):  # Удаляем старые виджеты
+            widget = self.movie_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        for i, movie in enumerate(self.movies):  # Добавляем обновленные фильмы
+            card = MovieCard(movie["title"], movie["image_path"])
+            self.movie_layout.addWidget(card, i // 4, i % 4)
