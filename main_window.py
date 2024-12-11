@@ -1,5 +1,5 @@
+import requests
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QGridLayout
-
 from add_movie_dialog import AddMovieDialog
 from movie_card import MovieCard
 from profile_window import ProfileWindow
@@ -7,24 +7,19 @@ from remove_movie_dialog import RemoveMovieDialog
 
 
 class MainWindow(QWidget):
+    SERVER_URL = "http://127.0.0.1:5000"  # URL сервера Flask
+
     def __init__(self):
         super().__init__()
         self.username = None
-        self.is_admin = True  # Флаг для проверки администратора
-        self.movies = [  # Список фильмов
-            {"title": "Movie 1", "image_path": r"res\moana.jpeg"},
-            {"title": "Movie 2", "image_path": r"res\moana.jpeg"},
-            {"title": "Movie 3", "image_path": r"res\moana.jpeg"},
-            {"title": "Movie 4", "image_path": r"res\moana.jpeg"},
-            {"title": "Movie 5", "image_path": r"res\moana.jpeg"}
-        ]
+        self.is_admin = False  # По умолчанию пользователь не является администратором
+        self.movies = []  # Список фильмов (будет загружен с сервера)
         self.init_ui()
 
     def init_ui(self):
         self.setWindowTitle("MOVAI")
         self.setFixedSize(1280, 832)
         layout = QVBoxLayout()
-
         layout.setContentsMargins(20, 20, 20, 20)
 
         # Верхняя панель
@@ -35,7 +30,6 @@ class MainWindow(QWidget):
 
         # Кнопка входа
         self.login_button = QPushButton("Sign In")
-        self.login_button.setStyleSheet("color: black; border: 1px solid #ccc; background-color: transparent;")
         self.login_button.clicked.connect(self.open_login)
 
         # Кнопка регистрации
@@ -69,9 +63,6 @@ class MainWindow(QWidget):
         # Карточки фильмов
         self.movie_layout = QGridLayout()
         self.update_movies()
-        # for i in range(200):  # Заглушки для фильмов
-        #     card = MovieCard(f"Movie {i + 1}", r"res/moana.jpeg")
-        #     self.movie_layout.addWidget(card, i // 4, i % 4)
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -82,6 +73,9 @@ class MainWindow(QWidget):
         layout.addLayout(self.header)
         layout.addWidget(scroll_area)
         self.setLayout(layout)
+
+        # Загружаем фильмы с сервера
+        self.fetch_movies()
 
     def open_login(self):
         from login_dialog import LoginDialog
@@ -96,16 +90,12 @@ class MainWindow(QWidget):
     def update_user_state(self, username):
         """Обновляет состояние интерфейса при входе в аккаунт"""
         self.username = username
+        self.is_admin = self.check_if_admin(username)
         self.login_button.hide()
         self.register_button.hide()
         self.profile_button.show()
         self.add_button.setVisible(self.is_admin)
         self.remove_button.setVisible(self.is_admin)
-
-    def open_profile(self):
-        """Открывает окно профиля"""
-        self.profile_window = ProfileWindow(self.username)
-        self.profile_window.show()
 
     def open_profile(self):
         """Открывает окно профиля"""
@@ -115,6 +105,7 @@ class MainWindow(QWidget):
     def logout(self):
         """Обновляет состояние интерфейса после выхода из аккаунта"""
         self.username = None
+        self.is_admin = False
         self.login_button.show()
         self.register_button.show()
         self.profile_button.hide()
@@ -122,22 +113,50 @@ class MainWindow(QWidget):
         self.remove_button.hide()
 
     def open_add_movie_dialog(self):
+        """Открывает диалоговое окно для добавления фильма"""
         dialog = AddMovieDialog(self.add_movie)
         dialog.exec_()
 
     def open_remove_movie_dialog(self):
+        """Открывает диалоговое окно для удаления фильма"""
         dialog = RemoveMovieDialog(self.movies, self.remove_movie)
         dialog.exec_()
 
-    def remove_movie(self, title):
-        self.movies = [movie for movie in self.movies if movie["title"] != title]
-        self.update_movies()
-
     def add_movie(self, title, image_path):
-        self.movies.append({"title": title, "image_path": image_path})
-        self.update_movies()
+        """Добавление фильма через сервер"""
+        response = requests.post(f"{self.SERVER_URL}/movies", json={
+            "title": title,
+            "image_path": image_path
+        })
+        if response.status_code == 201:
+            self.fetch_movies()  # Обновляем список фильмов
+
+    def remove_movie(self, title):
+        """Удаление фильма через сервер"""
+        movie = next((movie for movie in self.movies if movie["title"] == title), None)
+        if movie:
+            response = requests.delete(f"{self.SERVER_URL}/movies/{movie['id']}")
+            if response.status_code == 200:
+                self.fetch_movies()  # Обновляем список фильмов
+
+    def fetch_movies(self):
+        """Получение списка фильмов с сервера"""
+        response = requests.get(f"{self.SERVER_URL}/movies")
+        if response.status_code == 200:
+            self.movies = response.json()
+            self.update_movies()
+
+    def check_if_admin(self, username):
+        """Проверяет, является ли пользователь администратором"""
+        response = requests.get(f"{self.SERVER_URL}/users")
+        if response.status_code == 200:
+            users = response.json()
+            user = next((u for u in users if u["username"] == username), None)
+            return user and user.get("is_admin", False)
+        return False
 
     def update_movies(self):
+        """Обновляет отображение фильмов"""
         for i in reversed(range(self.movie_layout.count())):  # Удаляем старые виджеты
             widget = self.movie_layout.itemAt(i).widget()
             if widget:

@@ -35,3 +35,5 @@ APP_STYLE = """
             background-color: black; color: white; border-radius: 16px; padding: 10px;
         }
 """
+
+""" self.login_button.setStyleSheet("color: black; border: 1px solid #ccc; background-color: transparent;") """
