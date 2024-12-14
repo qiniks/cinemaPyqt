@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QGridLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QGridLayout, \
+    QApplication
 
 from add_movie_dialog import AddMovieDialog
+from app import app_data
 from movie_card import MovieCard
 from profile_window import ProfileWindow
 from remove_movie_dialog import RemoveMovieDialog
@@ -12,11 +14,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.username = None
         self.is_admin = True  # Флаг для проверки администратора
-        self.movies = [
-            {"title": "Movie 1", "image_path": r"res\moana.jpeg", "schedule": ["10:00", "14:00", "18:00"]},
-            {"title": "Movie 2", "image_path": r"res\moana.jpeg", "schedule": ["12:00", "16:00", "20:00"]},
-            {"title": "Movie 3", "image_path": r"res\moana.jpeg", "schedule": ["11:00", "15:00", "19:00"]}
-        ]
+        self.movies = app_data.movies
         self.init_ui()
 
     def init_ui(self):
@@ -129,14 +127,15 @@ class MainWindow(QWidget):
         dialog.exec_()
 
     def remove_movie(self, title):
-        self.movies = [movie for movie in self.movies if movie["title"] != title]
+        app_data.remove_movie(title)
         self.update_movies()
 
     def add_movie(self, title, image_path, showtimes):
-        self.movies.append({"title": title, "image_path": image_path, "schedule": showtimes})
+        app_data.add_movie(title, image_path, showtimes)
         self.update_movies()
 
     def update_movies(self):
+        print('update_movies')
         for i in reversed(range(self.movie_layout.count())):  # Удаляем старые виджеты
             widget = self.movie_layout.itemAt(i).widget()
             if widget:
@@ -148,7 +147,7 @@ class MainWindow(QWidget):
 
     def open_movie_details(self, movie):
         if movie:
-            self.movie_details_window = MovieDetailsWindow(movie, self)
+            self.movie_details_window = MovieDetailsWindow(movie, self.username, self)
             self.movie_details_window.show()
             self.hide()
         else:

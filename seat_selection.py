@@ -1,67 +1,74 @@
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
-    QGridLayout, QDialog, QMessageBox
-)
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QGridLayout, QMessageBox, QDialog
 from PyQt5.QtCore import Qt
+from app import app_data
 
 
 class SeatSelectionWindow(QDialog):
-    def __init__(self, movie_title, schedule_time):
-        super().__init__()
-        self.movie_title = movie_title
-        self.schedule_time = schedule_time
-        self.selected_seats = set()  # Хранит выбранные места
+    def __init__(self, user_id, movie_id, time, parent=None):
+        super().__init__(parent)
+        self.user_id = user_id
+        self.movie_id = movie_id
+        self.time = time
+        self.selected_seats = []
+
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle(f"Select Seats - {self.movie_title} ({self.schedule_time})")
-        self.setFixedSize(600, 400)
-
+        self.setWindowTitle("Выбор мест")
+        self.setFixedSize(600, 600)
         layout = QVBoxLayout()
 
-        # Заголовок
-        header_label = QLabel(f"Select your seats for '{self.movie_title}' at {self.schedule_time}")
-        header_label.setStyleSheet("font-size: 18px; font-weight: bold;")
-        layout.addWidget(header_label, alignment=Qt.AlignCenter)
+        # Сетка для мест
+        self.grid_layout = QGridLayout()
+        self.buttons = {}
 
-        # Сетка мест (5x8 для примера)
-        self.seat_grid = QGridLayout()
         for row in range(5):  # 5 рядов
-            for col in range(8):  # 8 мест в каждом ряду
-                seat_button = QPushButton(f"{row+1}{chr(65+col)}")  # Нумерация: 1A, 1B, ...
-                seat_button.setCheckable(True)
-                seat_button.setStyleSheet("padding: 10px; font-size: 14px;")
-                seat_button.clicked.connect(self.toggle_seat)
-                self.seat_grid.addWidget(seat_button, row, col)
+            for col in range(5):  # 5 мест в ряду
+                seat = f"{row + 1}-{chr(65 + col)}"
+                button = QPushButton(seat)
+                button.setCheckable(True)
+                if app_data.is_seat_taken(self.movie_id, self.time, seat):
+                    button.setStyleSheet("background-color: red; color: white;")  # Место занято
+                    button.setEnabled(False)  # Отключаем нажатие
+                else:
+                    button.setStyleSheet("background-color: lightgray;")
+                button.clicked.connect(self.toggle_seat)
+                self.buttons[seat] = button
+                self.grid_layout.addWidget(button, row, col)
 
-        layout.addLayout(self.seat_grid)
+        layout.addLayout(self.grid_layout)
 
-        # Кнопка "Buy"
-        buy_button = QPushButton("Buy")
-        buy_button.setStyleSheet("padding: 10px; font-size: 16px; background-color: green; color: white;")
-        buy_button.clicked.connect(self.buy_tickets)
-        layout.addWidget(buy_button, alignment=Qt.AlignCenter)
+        # Кнопка подтверждения
+        confirm_button = QPushButton("Buy")
+        confirm_button.setStyleSheet("padding: 10px; font-size: 16px;")
+        confirm_button.clicked.connect(self.buy_tickets)
+        layout.addWidget(confirm_button, alignment=Qt.AlignCenter)
 
         self.setLayout(layout)
 
     def toggle_seat(self):
-        """Обработчик выбора/отмены выбора места"""
-        button = self.sender()
-        seat = button.text()
-
-        if button.isChecked():
-            self.selected_seats.add(seat)  # Добавляем место в выбор
-            button.setStyleSheet("background-color: lightblue; padding: 10px; font-size: 14px;")
+        sender = self.sender()
+        seat = sender.text()
+        if sender.isChecked():
+            sender.setStyleSheet("background-color: green; color: white;")  # Выбрано
+            self.selected_seats.append(seat)
         else:
-            self.selected_seats.remove(seat)  # Убираем место из выбора
-            button.setStyleSheet("padding: 10px; font-size: 14px;")
+            sender.setStyleSheet("background-color: lightgray;")  # Снято
+            self.selected_seats.remove(seat)
 
     def buy_tickets(self):
-        """Обработчик покупки билетов"""
         if not self.selected_seats:
-            QMessageBox.warning(self, "No Seats Selected", "Please select at least one seat before buying.")
+            QMessageBox.warning(self, "Ошибка", "Выберите хотя бы одно место!")
             return
 
-        seats = ", ".join(sorted(self.selected_seats))
-        QMessageBox.information(self, "Purchase Successful", f"Seats purchased: {seats}")
-        self.accept()  # Закрыть диалог после покупки
+        success = True
+        for seat in self.selected_seats:
+            if not app_data.book_seat(self.user_id, self.movie_id, self.time, seat):
+                success = False
+                QMessageBox.warning(self, "Ошибка", f"Место {seat} уже занято!")
+
+        if success:
+            QMessageBox.information(self, "Успех", "Билеты успешно куплены!")
+            self.close()
+        else:
+            self.init_ui()  # Обновляем интерфейс, чтобы отразить актуальный статус мест

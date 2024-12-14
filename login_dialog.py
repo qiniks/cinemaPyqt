@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel
 from PyQt5.QtCore import Qt
 
 from res.styles import AUTH_STYLE, WELCOME_STYLE
-from user import User
+from app import app_data
 
 
 class LoginDialog(QDialog):
@@ -43,7 +43,7 @@ class LoginDialog(QDialog):
     def login(self):
         username = self.username_input.text()
         password = self.password_input.text()
-        if User.validate_user(username, password):
+        if app_data.validate_user(username, password):
             QMessageBox.information(self, "Login", "Welcome back!")
             self.on_success(username)
             self.accept()

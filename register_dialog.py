@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel
 from PyQt5.QtCore import Qt
 
 from res.styles import AUTH_STYLE, WELCOME_STYLE
-from user import User  # Убедитесь, что файл user.py существует и корректно импортируется
+from app import app_data
 
 
 class RegisterDialog(QDialog):
@@ -56,12 +56,12 @@ class RegisterDialog(QDialog):
             return
 
         # Проверяем, что пользователь с таким именем не существует
-        if username in User.users:
+        if username in app_data.users:
             QMessageBox.warning(self, "Error", f"Username '{username}' is already taken.")
             return
 
         # Добавляем пользователя
-        User.add_user(username, phone, password)
+        app_data.add_user(username, phone, password)
         QMessageBox.information(self, "Register", "Registration successful!")
 
         # Если передан метод on_success, вызываем его

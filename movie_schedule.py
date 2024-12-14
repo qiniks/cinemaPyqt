@@ -5,9 +5,10 @@ from seat_selection import SeatSelectionWindow
 
 
 class MovieDetailsWindow(QWidget):
-    def __init__(self, movie, main_window):
+    def __init__(self, movie, username, main_window):
         super().__init__()
         self.movie = movie
+        self.username = username
         self.main_window = main_window
         self.init_ui()
 
@@ -54,6 +55,12 @@ class MovieDetailsWindow(QWidget):
         self.close()  # Закрываем окно с расписанием
 
     def open_seat_selection(self, time):
-        """Открывает окно выбора мест"""
-        seat_selection_dialog = SeatSelectionWindow(self.movie["title"], time)
-        seat_selection_dialog.exec_()  # Открыть модальное окно
+        try:
+            print(f"Opening seat selection for movie: {self.movie['title']}, time: {time}")
+            seat_selection_dialog = SeatSelectionWindow(self.username, self.movie["title"], time)
+            seat_selection_dialog.exec()
+        except Exception as e:
+            print(f"Error in open_seat_selection: {e}")
+
+
+

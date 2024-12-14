@@ -3,8 +3,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-from res.styles import APP_STYLE
-from user import User
+from app import app_data
 
 
 class ProfileWindow(QMainWindow):
@@ -29,9 +28,9 @@ class ProfileWindow(QMainWindow):
         edit_group = QGroupBox("Edit Profile")
         edit_layout = QFormLayout()
 
-        self.username_input = QLineEdit(User.users[self.username]["username"])
-        self.phone_input = QLineEdit(User.users[self.username]["phone"])
-        self.password_input = QLineEdit(User.users[self.username]["password"])
+        self.username_input = QLineEdit(app_data.users[self.username]["username"])
+        self.phone_input = QLineEdit(app_data.users[self.username]["number"])
+        self.password_input = QLineEdit(app_data.users[self.username]["password"])
         self.password_input.setEchoMode(QLineEdit.Password)
 
         save_button = QPushButton("Save Changes")
@@ -39,7 +38,7 @@ class ProfileWindow(QMainWindow):
         save_button.clicked.connect(self.save_changes)
 
         edit_layout.addRow("Username:", self.username_input)
-        edit_layout.addRow("Phone:", self.phone_input)
+        edit_layout.addRow("Number:", self.phone_input)
         edit_layout.addRow("Password:", self.password_input)
         edit_layout.addRow(save_button)
         edit_group.setLayout(edit_layout)
@@ -48,14 +47,18 @@ class ProfileWindow(QMainWindow):
         history_group = QGroupBox("Purchase History")
         history_layout = QVBoxLayout()
 
-        self.ticket_list = QListWidget()
-        # Заполняем историю билетов (заглушки для примера)
-        tickets = User.users[self.username].get("tickets", [])
-        if tickets:
-            for ticket in tickets:
-                self.ticket_list.addItem(ticket)
-        else:
-            self.ticket_list.addItem("No tickets purchased yet.")
+        try:
+            self.ticket_list = QListWidget()
+            # Заполняем историю билетов (заглушки для примера)
+            tickets = app_data.users[self.username].get("bookings", [])
+            if tickets:
+                for ticket in tickets:
+                    ticket_info = f"Movie: {ticket['movie_title']}, Time: {ticket['time']}, Seat: {ticket['seat']}"
+                    self.ticket_list.addItem(ticket_info)  # Добавляем строку с информацией
+            else:
+                self.ticket_list.addItem("No tickets purchased yet.")
+        except Exception as e:
+            print(f"Error in open_seat_selection: {e}")
 
         history_layout.addWidget(self.ticket_list)
         history_group.setLayout(history_layout)
@@ -85,16 +88,18 @@ class ProfileWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "All fields are required.")
             return
 
-        if new_username != self.username and new_username in User.users:
+        if new_username != self.username and new_username in app_data.users:
             QMessageBox.warning(self, "Error", f"Username '{new_username}' is already taken.")
             return
 
         # Обновляем данные пользователя
-        user_data = User.users.pop(self.username)
+        print(app_data.users)
+        user_data = app_data.users.pop(self.username)
         user_data["username"] = new_username
-        user_data["phone"] = new_phone
+        user_data["number"] = new_phone
         user_data["password"] = new_password
-        User.users[new_username] = user_data
+        app_data.users[new_username] = user_data
+        print(app_data.users)
 
         self.username = new_username
         QMessageBox.information(self, "Success", "Profile updated successfully.")
