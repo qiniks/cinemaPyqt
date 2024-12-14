@@ -20,12 +20,16 @@ class AddMovieDialog(QDialog):
         self.image_path_input = QLineEdit()
         self.image_path_input.setPlaceholderText("Image Path")
 
-        add_button = QPushButton("Add")
+        self.schedule_input = QLineEdit()
+        self.schedule_input.setPlaceholderText("Showtimes (e.g., 10:00, 14:00, 18:00)")
+
+        add_button = QPushButton("Add Movie")
         add_button.clicked.connect(self.add_movie)
 
         layout.addWidget(QLabel("Add a new movie"))
         layout.addWidget(self.title_input)
         layout.addWidget(self.image_path_input)
+        layout.addWidget(self.schedule_input)
         layout.addWidget(add_button)
 
         self.setLayout(layout)
@@ -33,9 +37,11 @@ class AddMovieDialog(QDialog):
     def add_movie(self):
         title = self.title_input.text()
         image_path = self.image_path_input.text()
+        schedule = self.schedule_input.text()
 
         if title and image_path:
-            self.add_movie_callback(title, image_path)
+            showtimes = [time.strip() for time in schedule.split(",") if time.strip()]
+            self.add_movie_callback(title, image_path, showtimes)
             QMessageBox.information(self, "Success", "Movie added successfully!")
             self.accept()
         else:

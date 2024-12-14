@@ -4,6 +4,7 @@ from add_movie_dialog import AddMovieDialog
 from movie_card import MovieCard
 from profile_window import ProfileWindow
 from remove_movie_dialog import RemoveMovieDialog
+from movie_schedule import MovieDetailsWindow
 
 
 class MainWindow(QWidget):
@@ -11,12 +12,10 @@ class MainWindow(QWidget):
         super().__init__()
         self.username = None
         self.is_admin = True  # Флаг для проверки администратора
-        self.movies = [  # Список фильмов
-            {"title": "Movie 1", "image_path": r"res\moana.jpeg"},
-            {"title": "Movie 2", "image_path": r"res\moana.jpeg"},
-            {"title": "Movie 3", "image_path": r"res\moana.jpeg"},
-            {"title": "Movie 4", "image_path": r"res\moana.jpeg"},
-            {"title": "Movie 5", "image_path": r"res\moana.jpeg"}
+        self.movies = [
+            {"title": "Movie 1", "image_path": r"res\moana.jpeg", "schedule": ["10:00", "14:00", "18:00"]},
+            {"title": "Movie 2", "image_path": r"res\moana.jpeg", "schedule": ["12:00", "16:00", "20:00"]},
+            {"title": "Movie 3", "image_path": r"res\moana.jpeg", "schedule": ["11:00", "15:00", "19:00"]}
         ]
         self.init_ui()
 
@@ -133,8 +132,8 @@ class MainWindow(QWidget):
         self.movies = [movie for movie in self.movies if movie["title"] != title]
         self.update_movies()
 
-    def add_movie(self, title, image_path):
-        self.movies.append({"title": title, "image_path": image_path})
+    def add_movie(self, title, image_path, showtimes):
+        self.movies.append({"title": title, "image_path": image_path, "schedule": showtimes})
         self.update_movies()
 
     def update_movies(self):
@@ -144,5 +143,13 @@ class MainWindow(QWidget):
                 widget.deleteLater()
 
         for i, movie in enumerate(self.movies):  # Добавляем обновленные фильмы
-            card = MovieCard(movie["title"], movie["image_path"])
+            card = MovieCard(movie["title"], movie["image_path"], self.open_movie_details, movie)
             self.movie_layout.addWidget(card, i // 4, i % 4)
+
+    def open_movie_details(self, movie):
+        if movie:
+            self.movie_details_window = MovieDetailsWindow(movie, self)
+            self.movie_details_window.show()
+            self.hide()
+        else:
+            print("Invalid movie data!")

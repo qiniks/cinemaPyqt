@@ -1,12 +1,14 @@
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QMessageBox
+from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QMessageBox, QPushButton
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
 
-class MovieCard(QFrame):
-    def __init__(self, title, image_path):
+class MovieCard(QPushButton):
+    def __init__(self, title, image_path, callback, movie):
         super().__init__()
         self.title = title
+        self.callback = callback
+        self.movie = movie
         self.image_path = image_path
         self.init_ui()
 
@@ -36,7 +38,7 @@ class MovieCard(QFrame):
         layout.setSpacing(0)
         self.setLayout(layout)
 
-        self.mousePressEvent = self.on_click
+        self.clicked.connect(self.on_click)
 
-    def on_click(self, event):
-        QMessageBox.information(self, "Movie Info", f"Title: {self.title}")
+    def on_click(self):
+        self.callback(self.movie)
