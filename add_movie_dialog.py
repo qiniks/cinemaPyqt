@@ -35,12 +35,33 @@ class AddMovieDialog(QDialog):
         self.setLayout(layout)
 
     def add_movie(self):
+        import re
+
         title = self.title_input.text()
         image_path = self.image_path_input.text()
         schedule = self.schedule_input.text()
 
-        if title and image_path:
+        if title and image_path and schedule:
             showtimes = [time.strip() for time in schedule.split(",") if time.strip()]
+            valid_schedule = []
+            invalid_times = []
+
+            time_pattern = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+
+            for time in showtimes:
+                if time_pattern.match(time):
+                    valid_schedule.append(time)
+                else:
+                    invalid_times.append(time)
+
+            if invalid_times:
+                QMessageBox.warning(
+                    self,
+                    "Некорректное расписание",
+                    "Пожалуйста, введите время в формате HH:MM."
+                )
+                return  # Прерываем сохранение, если есть ошибки
+
             self.add_movie_callback(title, image_path, showtimes)
             QMessageBox.information(self, "Success", "Movie added successfully!")
             self.accept()

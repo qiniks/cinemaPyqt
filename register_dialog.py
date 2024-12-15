@@ -61,7 +61,7 @@ class RegisterDialog(QDialog):
             return
 
         # Добавляем пользователя
-        app_data.add_user(username, phone, password)
+        app_data.register_user(username, phone, password)
         QMessageBox.information(self, "Register", "Registration successful!")
 
         # Если передан метод on_success, вызываем его
