@@ -4,9 +4,9 @@ from app import app_data
 
 
 class SeatSelectionWindow(QDialog):
-    def __init__(self, user_id, movie_id, time, parent=None):
+    def __init__(self, username, movie_id, time, parent=None):
         super().__init__(parent)
-        self.user_id = user_id
+        self.username = username
         self.movie_id = movie_id
         self.time = time
         self.selected_seats = []
@@ -57,13 +57,18 @@ class SeatSelectionWindow(QDialog):
             self.selected_seats.remove(seat)
 
     def buy_tickets(self):
+        if self.username == None:
+            QMessageBox.warning(self, "Ошибка", "Для брони места вы должны авторизоваться.")
+            self.close()
+            return False
+
         if not self.selected_seats:
             QMessageBox.warning(self, "Ошибка", "Выберите хотя бы одно место!")
             return
 
         success = True
         for seat in self.selected_seats:
-            if not app_data.book_seat(self.user_id, self.movie_id, self.time, seat):
+            if not app_data.book_seat(self.username, self.movie_id, self.time, seat):
                 success = False
                 QMessageBox.warning(self, "Ошибка", f"Место {seat} уже занято!")
 

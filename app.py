@@ -40,24 +40,21 @@ class AppData:
                 print(title + " removed")
 
     def book_seat(self, user_id, movie_title, time, seat):
-        # Поиск фильма по title
         movie = next((m for m in self.movies if m["title"] == movie_title), None)
         if movie is None:
-            return False  # Фильм не найден
+            return False
 
         # Проверяем, существует ли указанное время и не занято ли место
         if time in movie["seats"] and seat not in movie["seats"][time]:
             movie["seats"][time].append(seat)  # Добавляем место как занятое
-
             # Добавляем информацию о бронировании для пользователя
             self.users[user_id]["bookings"].append({
                 "movie_title": movie_title,
                 "time": time,
                 "seat": seat
             })
-            return True  # Бронирование успешно
-
-        return False  # Место уже занято или время отсутствует
+            return True
+        return False
 
     def is_seat_taken(self, movie_title, time, seat):
         movie = next((m for m in self.movies if m["title"] == movie_title), None)

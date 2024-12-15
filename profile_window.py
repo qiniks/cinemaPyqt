@@ -29,6 +29,7 @@ class ProfileWindow(QMainWindow):
         edit_layout = QFormLayout()
 
         self.username_input = QLineEdit(app_data.users[self.username]["username"])
+        self.username_input.setEnabled(False)
         self.phone_input = QLineEdit(app_data.users[self.username]["number"])
         self.password_input = QLineEdit(app_data.users[self.username]["password"])
         self.password_input.setEchoMode(QLineEdit.Password)
@@ -49,7 +50,6 @@ class ProfileWindow(QMainWindow):
 
         try:
             self.ticket_list = QListWidget()
-            # Заполняем историю билетов (заглушки для примера)
             tickets = app_data.users[self.username].get("bookings", [])
             if tickets:
                 for ticket in tickets:

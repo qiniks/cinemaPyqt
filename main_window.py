@@ -1,3 +1,4 @@
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QGridLayout, \
     QApplication
 
@@ -6,7 +7,7 @@ from app import app_data
 from movie_card import MovieCard
 from profile_window import ProfileWindow
 from remove_movie_dialog import RemoveMovieDialog
-from movie_schedule import MovieDetailsWindow
+from seat_selection import SeatSelectionWindow
 
 
 class MainWindow(QWidget):
@@ -66,18 +67,23 @@ class MainWindow(QWidget):
         # Карточки фильмов
         self.movie_layout = QGridLayout()
         self.update_movies()
-        # for i in range(200):  # Заглушки для фильмов
-        #     card = MovieCard(f"Movie {i + 1}", r"res/moana.jpeg")
-        #     self.movie_layout.addWidget(card, i // 4, i % 4)
 
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        container = QWidget()
-        container.setLayout(self.movie_layout)
-        scroll_area.setWidget(container)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_container = QWidget()
+        self.scroll_container.setLayout(self.movie_layout)
+        self.scroll_area.setWidget(self.scroll_container)
+
+        # Виджет расписания фильмов
+        self.schedule_widget = QWidget()
+        self.schedule_widget_layout = QVBoxLayout()
+        self.schedule_widget.setLayout(self.schedule_widget_layout)
+        self.schedule_widget.hide()  # Прячем расписание при старте
 
         layout.addLayout(self.header)
-        layout.addWidget(scroll_area)
+        layout.addWidget(self.scroll_area)
+        layout.addWidget(self.schedule_widget)
+
         self.setLayout(layout)
 
     def open_login(self):
@@ -142,13 +148,73 @@ class MainWindow(QWidget):
                 widget.deleteLater()
 
         for i, movie in enumerate(self.movies):  # Добавляем обновленные фильмы
-            card = MovieCard(movie["title"], movie["image_path"], self.open_movie_details, movie)
+            card = MovieCard(movie["title"], movie["image_path"], self.show_schedule, movie)
             self.movie_layout.addWidget(card, i // 4, i % 4)
 
-    def open_movie_details(self, movie):
-        if movie:
-            self.movie_details_window = MovieDetailsWindow(movie, self.username, self)
-            self.movie_details_window.show()
-            self.hide()
+    def show_schedule(self, movie):
+        """Показывает расписание выбранного фильма"""
+        self.scroll_area.hide()
+        self.schedule_widget_layout.setContentsMargins(0, 0, 0, 0)
+        self.schedule_widget_layout.setSpacing(10)
+
+        # Заголовок фильма
+        title_label = QLabel(movie["title"])
+        title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        self.schedule_widget_layout.addWidget(title_label, alignment=Qt.AlignCenter)
+
+        # Горизонтальный Layout для кнопок времени
+        schedule_layout = QHBoxLayout()
+        schedule_layout.setSpacing(10)  # Задаём расстояние между кнопками
+
+        times = movie.get("schedule", [])
+        if not times:
+            no_schedule_label = QLabel("No schedule available.")
+            no_schedule_label.setStyleSheet("font-size: 16px; color: gray;")
+            self.schedule_widget_layout.addWidget(no_schedule_label, alignment=Qt.AlignCenter)
         else:
-            print("Invalid movie data!")
+            for time in times:
+                button = QPushButton(time)
+                button.setFixedSize(100, 50)
+                # button.setStyleSheet("color: black; border: 3px solid #FFFFFF; background-color: transparent;")
+                # button.setStyleSheet("padding: 10px; font-size: 16px;")
+                button.clicked.connect(lambda _, t=time: self.open_seat_selection(movie, t))
+                schedule_layout.addWidget(button)  # Добавляем кнопку в горизонтальный Layout
+
+        self.schedule_widget_layout.addLayout(schedule_layout)  # Добавляем горизонтальный Layout в общий Layout
+
+        # Кнопка "Back"
+        back_button = QPushButton("Back")
+        back_button.setStyleSheet("padding: 10px; font-size: 16px; margin-top: 20px;")
+        back_button.clicked.connect(self.show_movie_list)
+        self.schedule_widget_layout.addWidget(back_button, alignment=Qt.AlignCenter)
+
+        self.schedule_widget.show()
+
+    def open_seat_selection(self, movie, time):
+        try:
+            print(f"Opening seat selection for movie: {movie['title']} time: {time}")
+            seat_selection_dialog = SeatSelectionWindow(self.username, movie["title"], time)
+            seat_selection_dialog.exec()
+        except Exception as e:
+            print(f"Error in open_seat_selection: {e}")
+
+    def show_movie_list(self):
+        """Показывает список фильмов"""
+        # Удаляем все виджеты из schedule_widget_layout
+        for i in reversed(range(self.schedule_widget_layout.count())):
+            item = self.schedule_widget_layout.itemAt(i)
+            if item:
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
+                else:
+                    layout = item.layout()
+                    if layout:
+                        while layout.count():
+                            child = layout.takeAt(0)
+                            if child.widget():
+                                child.widget().deleteLater()
+                        layout.deleteLater()
+
+        self.schedule_widget.hide()
+        self.scroll_area.show()
