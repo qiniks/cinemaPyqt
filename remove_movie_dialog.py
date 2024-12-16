@@ -1,5 +1,8 @@
 import requests
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QPushButton, QLabel, QMessageBox
+
+from res.styles import WELCOME_STYLE
 
 
 class RemoveMovieDialog(QDialog):
@@ -15,13 +18,17 @@ class RemoveMovieDialog(QDialog):
 
         layout = QVBoxLayout()
 
+        self.label = QLabel("Remove Movie")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setStyleSheet(WELCOME_STYLE)
+
         self.movie_selector = QComboBox()
         self.movie_selector.addItems([movie["title"] for movie in self.movies])
 
         remove_button = QPushButton("Remove")
         remove_button.clicked.connect(self.remove_movie)
 
-        layout.addWidget(QLabel("Select a movie to remove"))
+        layout.addWidget(self.label)
         layout.addWidget(self.movie_selector)
         layout.addWidget(remove_button)
 

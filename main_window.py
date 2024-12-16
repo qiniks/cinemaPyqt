@@ -31,18 +31,22 @@ class MainWindow(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
 
         self.header = QHBoxLayout()
+        self.header.setContentsMargins(10, 10, 10, 10)
 
         title_label = QLabel("MOVAI")
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        title_label.setStyleSheet("font-size: 52px; font-weight: bold; font-family: Agency FB")
 
         self.login_button = QPushButton("Sign In")
-        self.login_button.setStyleSheet("color: black; border: 1px solid #ccc; background-color: transparent;")
+        self.login_button.setStyleSheet("color: #373737; border: 1px solid #373737; background-color: white;")
         self.login_button.clicked.connect(self.open_login)
 
         self.register_button = QPushButton("Sign Up")
         self.register_button.clicked.connect(self.open_register)
 
-        self.profile_button = QPushButton("Профиль")
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.clicked.connect(self.update_movies)
+
+        self.profile_button = QPushButton("Profile")
         self.profile_button.clicked.connect(self.open_profile)
         self.profile_button.hide()
 
@@ -63,6 +67,7 @@ class MainWindow(QWidget):
 
         self.header.addWidget(title_label)
         self.header.addStretch()
+        self.header.addWidget(self.refresh_button)
         self.header.addWidget(self.login_button)
         self.header.addWidget(self.register_button)
         self.header.addWidget(self.profile_button)
@@ -78,6 +83,7 @@ class MainWindow(QWidget):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_container = QWidget()
+        self.scroll_area.setStyleSheet('border: 0px')
         self.scroll_container.setLayout(self.movie_layout)
         self.scroll_area.setWidget(self.scroll_container)
 
@@ -187,7 +193,7 @@ class MainWindow(QWidget):
             self.schedule_widget_layout.setSpacing(10)
 
             title_label = QLabel(movie["title"])
-            title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+            title_label.setStyleSheet("font-size: 48px; font-weight: bold; font-family: Agency FB")
             self.schedule_widget_layout.addWidget(title_label, alignment=Qt.AlignCenter)
 
             schedule_layout = QHBoxLayout()
@@ -202,14 +208,15 @@ class MainWindow(QWidget):
                 for time in times:
                     button = QPushButton(time)
                     button.setFixedSize(100, 50)
-                    button.setStyleSheet("color: black; border: 3px solid #000; background-color: transparent;")
+                    button.setStyleSheet(
+                        "color: black; border: 3px solid #373737; background-color: white;")
                     button.clicked.connect(lambda _, t=time: self.open_seat_selection(movie, t))
                     schedule_layout.addWidget(button)
 
             self.schedule_widget_layout.addLayout(schedule_layout)
 
             back_button = QPushButton("Back")
-            back_button.setStyleSheet("padding: 10px; font-size: 16px; margin-top: 20px;")
+            back_button.setStyleSheet("font-size: 24px; margin-top: 20px;padding: 10px")
             back_button.clicked.connect(self.show_movie_list)
             self.schedule_widget_layout.addWidget(back_button, alignment=Qt.AlignCenter)
 
@@ -225,7 +232,6 @@ class MainWindow(QWidget):
 
     def show_movie_list(self):
         self.schedule_widget.hide()
-        self.update_movies()
         self.scroll_area.show()
 
     def toggle_edit_mode(self, checked):
@@ -233,7 +239,7 @@ class MainWindow(QWidget):
         if checked:
             self.edit_mode_checkbox.setStyleSheet("background-color: green;")
         else:
-            self.edit_mode_checkbox.setStyleSheet("background-color: black;")
+            self.edit_mode_checkbox.setStyleSheet("background-color: #373737;")
 
     def open_movie_edit_dialog(self, movie):
         dialog = MovieEditDialog(movie, self.api_url, self)

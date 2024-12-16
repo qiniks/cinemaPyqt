@@ -14,15 +14,21 @@ class MovieEditDialog(QDialog):
 
         # Поле для изменения пути картинки
         image_path_label = QLabel("Путь к картинке:")
+        image_path_label.setStyleSheet("font-size: 14px")
         self.image_path_edit = QLineEdit(movie["image_path"])
+        self.image_path_edit.setStyleSheet("font-size: 14px")
 
         # Поле для изменения расписания
         schedule_label = QLabel("Расписание (через запятую):")
+        schedule_label.setStyleSheet("font-size: 14px")
         self.schedule_edit = QLineEdit(",".join(movie["schedule"]))
+        self.schedule_edit.setStyleSheet("font-size: 14px")
 
         # Поле для выбора сеанса
         session_label = QLabel("Выберите сеанс для отчета:")
+        session_label.setStyleSheet("font-size: 14px")
         self.session_combo = QComboBox()
+        self.session_combo.setStyleSheet("font-size: 14px")
         self.session_combo.addItem("Все сеансы")
         self.session_combo.addItems(movie["schedule"])
         self.session_combo.currentIndexChanged.connect(self.generate_report)

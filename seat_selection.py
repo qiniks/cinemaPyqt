@@ -26,16 +26,31 @@ class SeatSelectionWindow(QDialog):
         taken_seats = self.get_taken_seats()
         print(taken_seats)
 
-        for row in range(5):
-            for col in range(5):
+        self.setStyleSheet('''       
+         QPushButton {
+            font-family: Cabin;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 0px;
+            border-bottom-left-radius: 26px;
+            border-bottom-right-radius: 26px;
+        }''')
+
+        self.grid_layout.setHorizontalSpacing(10)
+        self.grid_layout.setVerticalSpacing(10)
+        self.grid_layout.setContentsMargins(10, 10, 10, 10)
+
+        for row in range(6):
+            for col in range(6):
                 seat = f"{row + 1}-{chr(65 + col)}"
                 button = QPushButton(seat)
                 button.setCheckable(True)
+                button.setFixedSize(55, 70)
                 if seat in taken_seats:
-                    button.setStyleSheet("background-color: red; color: white;")
+                    button.setStyleSheet("background-color: rgba(243, 25, 36, 1); color: white;")
                     button.setEnabled(False)
                 else:
-                    button.setStyleSheet("background-color: lightgray;")
+                    button.setStyleSheet("background-color: rgba(112, 108, 108, 1); color: white")
                 button.clicked.connect(self.toggle_seat)
                 self.buttons[seat] = button
                 self.grid_layout.addWidget(button, row, col)
@@ -44,7 +59,7 @@ class SeatSelectionWindow(QDialog):
 
         # Кнопка подтверждения
         confirm_button = QPushButton("Buy")
-        confirm_button.setStyleSheet("padding: 10px; font-size: 16px;")
+        confirm_button.setStyleSheet("padding: 10px; font-size: 24px; border-radius: 10px; font-weight: normal; ")
         confirm_button.clicked.connect(self.buy_tickets)
         layout.addWidget(confirm_button, alignment=Qt.AlignCenter)
 
@@ -62,7 +77,7 @@ class SeatSelectionWindow(QDialog):
             else:
                 # QMessageBox.critical(self, "Ошибка", "Не удалось проверить статус мест.")
                 print("Ошибка", "Не удалось проверить статус мест.")
-                return True  # Считаем место занятым при ошибке
+                return True
         except Exception as e:
             QMessageBox.critical(self, "Ошибка подключения", str(e))
             return True
@@ -71,10 +86,10 @@ class SeatSelectionWindow(QDialog):
         sender = self.sender()
         seat = sender.text()
         if sender.isChecked():
-            sender.setStyleSheet("background-color: green; color: white;")  # Выбрано
+            sender.setStyleSheet("background-color: rgba(255, 153, 0, 1); color: white;")  # Выбрано
             self.selected_seats.append(seat)
         else:
-            sender.setStyleSheet("background-color: lightgray;")  # Снято
+            sender.setStyleSheet("background-color: rgba(112, 108, 108, 1);")  # Снято
             self.selected_seats.remove(seat)
 
     def buy_tickets(self):

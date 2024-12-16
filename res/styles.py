@@ -32,6 +32,13 @@ APP_STYLE = """
         QPushButton {
             font-family: Cabin;
             font-size: 20px;
-            background-color: black; color: white; border-radius: 16px; padding: 10px;
+            background-color: #373737; color: white; border-radius: 16px; padding: 10px;
+        }
+        QComboBox {
+             font-family: Cabin;
+            font-size: 20px;
+            border-radius: 10px; 
+            padding: 6px;
+            border: 1px solid #373737;
         }
 """

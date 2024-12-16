@@ -3,6 +3,8 @@ import requests
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox
 
+from res.styles import WELCOME_STYLE
+
 
 class AddMovieDialog(QDialog):
     def __init__(self, api_url):
@@ -16,6 +18,10 @@ class AddMovieDialog(QDialog):
 
         layout = QVBoxLayout()
 
+        self.label = QLabel("Add Movie")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setStyleSheet(WELCOME_STYLE)
+
         self.title_input = QLineEdit()
         self.title_input.setPlaceholderText("Movie Title")
 
@@ -28,7 +34,7 @@ class AddMovieDialog(QDialog):
         add_button = QPushButton("Add Movie")
         add_button.clicked.connect(self.add_movie)
 
-        layout.addWidget(QLabel("Add a new movie"))
+        layout.addWidget(self.label)
         layout.addWidget(self.title_input)
         layout.addWidget(self.image_path_input)
         layout.addWidget(self.schedule_input)

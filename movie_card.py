@@ -19,6 +19,8 @@ class MovieCard(QPushButton):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
+        self.setStyleSheet('border-radius: 10px 10px 10px 10px; bacground: transparent;')
+
         # Картинка
         pixmap = QPixmap(self.image_path).scaled(
             220, 320, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation
@@ -29,9 +31,9 @@ class MovieCard(QPushButton):
 
         # Текстовое поле
         text_container = QLabel(self.title)
-        text_container.setFixedSize(220, 30)
+        text_container.setFixedSize(220, 36)
         text_container.setStyleSheet(
-            "color: white; font-size: 16px; background-color: rgb(200, 100, 255);"
+            "color: white; font-size:16px; background-color: rgba(55, 55, 55, 40%); padding: 10px"
         )
         text_container.setAlignment(Qt.AlignCenter)
 
