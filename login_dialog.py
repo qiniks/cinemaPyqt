@@ -1,15 +1,13 @@
-import requests
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
-
 from res.styles import AUTH_STYLE, WELCOME_STYLE
+import requests
 
 
 class LoginDialog(QDialog):
     def __init__(self, api_url, on_success):
         super().__init__()
-        self.on_success = on_success  # Метод вызывается после успешного входа
+        self.on_success = on_success
         self.api_url = api_url
         self.init_ui()
 
@@ -33,7 +31,6 @@ class LoginDialog(QDialog):
         self.welcome_label.setAlignment(Qt.AlignCenter)
 
         layout = QVBoxLayout()
-
         layout.addWidget(self.welcome_label)
         layout.addWidget(self.username_input)
         layout.addWidget(self.password_input)
@@ -45,12 +42,10 @@ class LoginDialog(QDialog):
         username = self.username_input.text().strip()
         password = self.password_input.text().strip()
 
-        # Проверяем, что поля заполнены
         if not username or not password:
             QMessageBox.warning(self, "Error", "Both fields are required.")
             return
 
-        # Отправляем запрос на сервер для проверки логина
         try:
             response = requests.post(
                 f"{self.api_url}/login",
@@ -59,7 +54,7 @@ class LoginDialog(QDialog):
 
             if response.status_code == 200:
                 QMessageBox.information(self, "Login", "Welcome back!")
-                self.on_success(username)  # Вызываем callback
+                self.on_success(username)
                 self.accept()
             elif response.status_code == 401:
                 QMessageBox.warning(self, "Error", "Invalid username or password.")

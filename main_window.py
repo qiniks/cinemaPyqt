@@ -2,6 +2,7 @@ import requests
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QGridLayout, \
     QApplication, QCheckBox, QMessageBox, QDialog, QLineEdit, QTextEdit
+from pyqtcaptcha import Captcha, CaptchaDifficulty
 
 from add_movie_dialog import AddMovieDialog
 from app_data import app_data
@@ -75,6 +76,10 @@ class MainWindow(QWidget):
         self.header.addWidget(self.remove_button)
         self.header.addWidget(self.edit_mode_checkbox)
 
+        self.captcha = Captcha()
+        self.captcha.setDifficulty(CaptchaDifficulty.EASY)
+        self.captcha.passed.connect(self.show_header)
+
         # Карточки фильмов
         self.movie_layout = QGridLayout()
         self.update_movies()
@@ -93,20 +98,30 @@ class MainWindow(QWidget):
         self.schedule_widget.setLayout(self.schedule_widget_layout)
         self.schedule_widget.hide()
         layout.addLayout(self.header)
+        layout.addWidget(self.captcha)
         layout.addWidget(self.scroll_area)
         layout.addWidget(self.schedule_widget)
 
         self.setLayout(layout)
 
+    def show_header(self):
+        self.captcha.hide()
+
     def open_login(self):
-        from login_dialog import LoginDialog
-        dialog = LoginDialog(self.api_url, self.update_user_state)
-        dialog.exec_()
+        if self.captcha.isPassed():
+            from login_dialog import LoginDialog
+            dialog = LoginDialog(self.api_url, self.update_user_state)
+            dialog.exec_()
+        else:
+            QMessageBox.warning(self, "Captha", "Solve captcha first!.")
 
     def open_register(self):
-        from register_dialog import RegisterDialog
-        dialog = RegisterDialog(self.api_url, self.update_user_state)
-        dialog.exec_()
+        if self.captcha.isPassed():
+            from register_dialog import RegisterDialog
+            dialog = RegisterDialog(self.api_url, self.update_user_state)
+            dialog.exec_()
+        else:
+            QMessageBox.warning(self, "Captha", "Solve captcha first!.")
 
     def update_user_state(self, username):
         """Обновляет состояние интерфейса при входе в аккаунт"""
