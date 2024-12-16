@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QMessageBox, QPushButton
+from PyQt5.QtWidgets import QVBoxLayout, QLabel, QPushButton
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
@@ -13,19 +13,21 @@ class MovieCard(QPushButton):
         self.init_ui()
 
     def init_ui(self):
-        self.setFixedSize(220, 320)  # Общий размер карточки
+        self.setFixedSize(220, 320)
         self.setCursor(Qt.PointingHandCursor)
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)  # Убираем все отступы
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # Картинка
-        pixmap = QPixmap(self.image_path).scaled(220, 320, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        pixmap = QPixmap(self.image_path).scaled(
+            220, 320, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation
+        )
         image_label = QLabel()
         image_label.setPixmap(pixmap)
         image_label.setAlignment(Qt.AlignCenter)
 
-        # Текст с затемнением, перекрывающим нижнюю часть картинки
+        # Текстовое поле
         text_container = QLabel(self.title)
         text_container.setFixedSize(220, 30)
         text_container.setStyleSheet(

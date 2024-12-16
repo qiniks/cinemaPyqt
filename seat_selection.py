@@ -1,12 +1,13 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QGridLayout, QMessageBox, QDialog
+import requests
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QGridLayout, QMessageBox, QDialog
 from PyQt5.QtCore import Qt
-from app import app_data
 
 
 class SeatSelectionWindow(QDialog):
-    def __init__(self, username, movie_id, time, parent=None):
+    def __init__(self, username, movie_id, time, api_url, parent=None):
         super().__init__(parent)
         self.username = username
+        self.api_url = api_url
         self.movie_id = movie_id
         self.time = time
         self.selected_seats = []
@@ -22,14 +23,17 @@ class SeatSelectionWindow(QDialog):
         self.grid_layout = QGridLayout()
         self.buttons = {}
 
-        for row in range(5):  # 5 рядов
-            for col in range(5):  # 5 мест в ряду
+        taken_seats = self.get_taken_seats()
+        print(taken_seats)
+
+        for row in range(5):
+            for col in range(5):
                 seat = f"{row + 1}-{chr(65 + col)}"
                 button = QPushButton(seat)
                 button.setCheckable(True)
-                if app_data.is_seat_taken(self.movie_id, self.time, seat):
-                    button.setStyleSheet("background-color: red; color: white;")  # Место занято
-                    button.setEnabled(False)  # Отключаем нажатие
+                if seat in taken_seats:
+                    button.setStyleSheet("background-color: red; color: white;")
+                    button.setEnabled(False)
                 else:
                     button.setStyleSheet("background-color: lightgray;")
                 button.clicked.connect(self.toggle_seat)
@@ -46,6 +50,23 @@ class SeatSelectionWindow(QDialog):
 
         self.setLayout(layout)
 
+    def get_taken_seats(self):
+        try:
+            response = requests.get(
+                f"{self.api_url}/get_taken_seats",
+                params={"movie_id": self.movie_id, "time": self.time},
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return data
+            else:
+                # QMessageBox.critical(self, "Ошибка", "Не удалось проверить статус мест.")
+                print("Ошибка", "Не удалось проверить статус мест.")
+                return True  # Считаем место занятым при ошибке
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка подключения", str(e))
+            return True
+
     def toggle_seat(self):
         sender = self.sender()
         seat = sender.text()
@@ -57,10 +78,10 @@ class SeatSelectionWindow(QDialog):
             self.selected_seats.remove(seat)
 
     def buy_tickets(self):
-        if self.username == None:
+        if self.username is None:
             QMessageBox.warning(self, "Ошибка", "Для брони места вы должны авторизоваться.")
             self.close()
-            return False
+            return
 
         if not self.selected_seats:
             QMessageBox.warning(self, "Ошибка", "Выберите хотя бы одно место!")
@@ -68,7 +89,7 @@ class SeatSelectionWindow(QDialog):
 
         success = True
         for seat in self.selected_seats:
-            if not app_data.book_seat(self.username, self.movie_id, self.time, seat):
+            if not self.book_seat(seat):
                 success = False
                 QMessageBox.warning(self, "Ошибка", f"Место {seat} уже занято!")
 
@@ -77,3 +98,23 @@ class SeatSelectionWindow(QDialog):
             self.close()
         else:
             self.init_ui()  # Обновляем интерфейс, чтобы отразить актуальный статус мест
+
+    def book_seat(self, seat):
+        """Бронирование места через Flask API"""
+        try:
+            response = requests.post(
+                f"{self.api_url}/book_seat",
+                json={
+                    "username": self.username,
+                    "movie_id": self.movie_id,
+                    "time": self.time,
+                    "seat": seat,
+                },
+            )
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка подключения", str(e))
+            return False

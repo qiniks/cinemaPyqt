@@ -1,12 +1,14 @@
+import requests
 from PyQt5.QtWidgets import (
     QDialog, QLabel, QLineEdit, QTextEdit, QPushButton, QVBoxLayout, QMessageBox, QComboBox
 )
 
 
 class MovieEditDialog(QDialog):
-    def __init__(self, movie, parent=None):
+    def __init__(self, movie, api_url, parent=None):
         super().__init__(parent)
         self.movie = movie
+        self.api_url = api_url
         self.setWindowTitle(f"Редактирование фильма: {movie['title']}")
         self.setFixedSize(400, 500)
 
@@ -50,10 +52,6 @@ class MovieEditDialog(QDialog):
         self.setLayout(layout)
 
     def generate_report(self):
-        """
-        Генерирует отчёт по фильму.
-        Если указано session_time, то отчёт создаётся только для конкретного сеанса.
-        """
         report_lines = []
 
         session = self.session_combo.currentText()
@@ -91,7 +89,7 @@ class MovieEditDialog(QDialog):
 
     def save_movie_changes(self):
         import re
-        """Сохраняет изменения фильма с проверкой расписания"""
+        """Сохраняет изменения фильма с отправкой на Flask сервер"""
         new_image_path = self.image_path_edit.text()
         new_schedule_text = self.schedule_edit.text()
 
@@ -116,9 +114,6 @@ class MovieEditDialog(QDialog):
             )
             return
 
-        self.movie["image_path"] = new_image_path
-        self.movie["schedule"] = valid_schedule
-
         # Обновляем слоты для новых сеансов
         if "seats" not in self.movie:
             self.movie["seats"] = {time: [] for time in valid_schedule}
@@ -127,5 +122,30 @@ class MovieEditDialog(QDialog):
                 if time not in self.movie["seats"]:
                     self.movie["seats"][time] = []
 
-        QMessageBox.information(self, "Успешно", "Изменения сохранены!")
-        self.accept()
+        # Удаляем слоты для сеансов, которые больше не присутствуют в расписании
+        for time in list(self.movie["seats"].keys()):
+            if time not in valid_schedule:
+                del self.movie["seats"][time]
+
+        # Обновляем список сеансов в комбобоксе
+        self.session_combo.clear()
+        self.session_combo.addItem("Все сеансы")
+        self.session_combo.addItems(valid_schedule)
+
+        # Отправка данных на сервер
+        payload = {
+            "title": self.movie["title"],
+            "image_path": new_image_path,
+            "schedule": valid_schedule
+        }
+
+        try:
+            response = requests.post(f"{self.api_url}/update_movie", json=payload)
+            if response.status_code == 200:
+                QMessageBox.information(self, "Успешно", "Изменения сохранены!")
+                self.accept()
+            else:
+                error_message = response.json().get("error", "Неизвестная ошибка")
+                QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении: {error_message}")
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")

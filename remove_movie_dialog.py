@@ -1,11 +1,12 @@
+import requests
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QPushButton, QLabel, QMessageBox
 
 
 class RemoveMovieDialog(QDialog):
-    def __init__(self, movies, remove_movie_callback):
+    def __init__(self, movies, api_url):
         super().__init__()
         self.movies = movies
-        self.remove_movie_callback = remove_movie_callback
+        self.api_url = api_url
         self.init_ui()
 
     def init_ui(self):
@@ -29,9 +30,18 @@ class RemoveMovieDialog(QDialog):
     def remove_movie(self):
         selected_title = self.movie_selector.currentText()
 
-        if selected_title:
-            self.remove_movie_callback(selected_title)
-            QMessageBox.information(self, "Success", f"Movie '{selected_title}' removed successfully!")
-            self.accept()
-        else:
+        if not selected_title:
             QMessageBox.warning(self, "Error", "No movie selected.")
+            return
+
+        try:
+            response = requests.delete(f"{self.api_url}/movies/{selected_title}")
+            if response.status_code == 200:
+                QMessageBox.information(self, "Success", f"Movie '{selected_title}' removed successfully!")
+                self.accept()
+            elif response.status_code == 404:
+                QMessageBox.warning(self, "Error", f"Movie '{selected_title}' not found on the server.")
+            else:
+                QMessageBox.warning(self, "Error", f"Failed to remove movie: {response.text}")
+        except requests.RequestException as e:
+            QMessageBox.critical(self, "Server Error", f"Unable to connect to server: {e}")

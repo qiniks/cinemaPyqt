@@ -1,9 +1,10 @@
+import requests
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QGridLayout, \
     QApplication, QCheckBox, QMessageBox, QDialog, QLineEdit, QTextEdit
 
 from add_movie_dialog import AddMovieDialog
-from app import app_data
+from app_data import app_data
 from movie_card import MovieCard
 from movie_edit import MovieEditDialog
 from profile_window import ProfileWindow
@@ -14,10 +15,12 @@ from seat_selection import SeatSelectionWindow
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+        # self.api_url = "http://127.0.0.1:5000"
+        self.api_url = "https://efdfte.pythonanywhere.com"
         self.username = None
         self.is_admin = False
         self.edit_mode = False
-        self.movies = app_data.movies
+        self.movies = None
         self.init_ui()
 
     def init_ui(self):
@@ -91,12 +94,12 @@ class MainWindow(QWidget):
 
     def open_login(self):
         from login_dialog import LoginDialog
-        dialog = LoginDialog(self.update_user_state)
+        dialog = LoginDialog(self.api_url, self.update_user_state)
         dialog.exec_()
 
     def open_register(self):
         from register_dialog import RegisterDialog
-        dialog = RegisterDialog(self.update_user_state)
+        dialog = RegisterDialog(self.api_url, self.update_user_state)
         dialog.exec_()
 
     def update_user_state(self, username):
@@ -112,7 +115,7 @@ class MainWindow(QWidget):
 
     def open_profile(self):
         """Открывает окно профиля"""
-        self.profile_window = ProfileWindow(self.username, self.logout)
+        self.profile_window = ProfileWindow(self.username, self.logout, self.api_url)
         self.profile_window.show()
 
     def logout(self):
@@ -127,28 +130,32 @@ class MainWindow(QWidget):
         self.edit_mode = False
 
     def open_add_movie_dialog(self):
-        dialog = AddMovieDialog(self.add_movie)
-        dialog.exec_()
+        dialog = AddMovieDialog(self.api_url)
+        if dialog.exec_():
+            self.update_movies()
 
     def open_remove_movie_dialog(self):
-        dialog = RemoveMovieDialog(self.movies, self.remove_movie)
-        dialog.exec_()
-
-    def remove_movie(self, title):
-        app_data.remove_movie(title)
-        self.update_movies()
-
-    def add_movie(self, title, image_path, showtimes):
-        app_data.add_movie(title, image_path, showtimes)
-        self.update_movies()
+        dialog = RemoveMovieDialog(self.movies, self.api_url)
+        if dialog.exec_():
+            self.update_movies()
 
     def update_movies(self):
-        print('update_movies')
-        for i in reversed(range(self.movie_layout.count())):  # Удаляем старые виджеты
+        try:
+            response = requests.get(f"{self.api_url}/movies")
+            if response.status_code == 200:
+                self.movies = response.json()
+            else:
+                QMessageBox.warning(self, "Error", "Unable to fetch movies from the server.")
+        except requests.RequestException:
+            QMessageBox.critical(self, "Error", f"Server connection failed")
+
+        # Очищаем старые виджеты
+        for i in reversed(range(self.movie_layout.count())):
             widget = self.movie_layout.itemAt(i).widget()
             if widget:
                 widget.deleteLater()
 
+        # Добавляем обновленные карточки фильмов
         for i, movie in enumerate(self.movies):
             card = MovieCard(movie["title"], movie["image_path"], self.show_schedule, movie)
             self.movie_layout.addWidget(card, i // 4, i % 4)
@@ -210,13 +217,14 @@ class MainWindow(QWidget):
     def open_seat_selection(self, movie, time):
         try:
             print(f"Opening seat selection for movie: {movie['title']} time: {time}")
-            seat_selection_dialog = SeatSelectionWindow(self.username, movie["title"], time)
+            seat_selection_dialog = SeatSelectionWindow(self.username, movie["title"], time, self.api_url)
             seat_selection_dialog.exec()
         except Exception as e:
             print(e)
 
     def show_movie_list(self):
         self.schedule_widget.hide()
+        self.update_movies()
         self.scroll_area.show()
 
     def toggle_edit_mode(self, checked):
@@ -227,6 +235,6 @@ class MainWindow(QWidget):
             self.edit_mode_checkbox.setStyleSheet("background-color: black;")
 
     def open_movie_edit_dialog(self, movie):
-        dialog = MovieEditDialog(movie, self)
+        dialog = MovieEditDialog(movie, self.api_url, self)
         if dialog.exec_():
             self.update_movies()
