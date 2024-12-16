@@ -16,7 +16,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         # self.api_url = "http://127.0.0.1:5000"
-        self.api_url = "https://efdfte.pythonanywhere.com"
+        self.api_url = "https://qiniks.pythonanywhere.com"
         self.username = None
         self.is_admin = False
         self.edit_mode = False
@@ -142,6 +142,7 @@ class MainWindow(QWidget):
     def update_movies(self):
         try:
             response = requests.get(f"{self.api_url}/movies")
+            print(response, response.text)
             if response.status_code == 200:
                 self.movies = response.json()
             else:
