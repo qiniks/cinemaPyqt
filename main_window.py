@@ -16,8 +16,8 @@ from seat_selection import SeatSelectionWindow
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        # self.api_url = "http://127.0.0.1:5000"
-        self.api_url = "https://qiniks.pythonanywhere.com"
+        self.api_url = "http://127.0.0.1:5000"  # локальный сервер
+        # self.api_url = "https://qiniks.pythonanywhere.com" # ссылка на сервер
         self.username = None
         self.is_admin = False
         self.edit_mode = False

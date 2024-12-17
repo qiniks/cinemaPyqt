@@ -9,19 +9,19 @@ class AppData:
             }], "is_admin": True},
         }
         self.movies = [
-            {"title": "Movie 1", "image_path": r"res\moana.jpeg", "schedule": ["10:00", "14:00", "18:00"],
-             "seats": {  # Обязательное поле
+            {"title": "Moana", "image_path": r"res\moana.jpeg", "schedule": ["10:00", "14:00", "18:00"],
+             "seats": {
                  "10:00": {"3-A": "User1", "3-B": "User2"},
                  "14:00": {},
                  "18:00": {}
              }},
-            {"title": "Movie 2", "image_path": r"res\moana.jpeg", "schedule": ["16:00", "20:00"],
-             "seats": {  # Обязательное поле
+            {"title": "Spider man", "image_path": r"res\spider_man.png", "schedule": ["16:00", "20:00"],
+             "seats": {
                  "16:00": {},
                  "20:00": {}
              }},
-            {"title": "Movie 3", "image_path": r"res\moana.jpeg", "schedule": ["15:00", "19:00"],
-             "seats": {  # Обязательное поле
+            {"title": "Solo leveling", "image_path": r"res\solo.png", "schedule": ["15:00", "19:00"],
+             "seats": {
                  "15:00": {},
                  "19:00": {}
              }}

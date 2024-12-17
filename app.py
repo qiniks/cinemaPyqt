@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 
-# from app_data import app_data  # Импортируйте ваш класс AppData
+# from app_data import app_data
 
 app = Flask(__name__)
 
@@ -16,19 +16,19 @@ class AppData:
             }], "is_admin": True},
         }
         self.movies = [
-            {"title": "Movie 1", "image_path": r"res\moana.jpeg", "schedule": ["10:00", "14:00", "18:00"],
-             "seats": {  # Обязательное поле
+            {"title": "Moana", "image_path": r"res\moana.jpeg", "schedule": ["10:00", "14:00", "18:00"],
+             "seats": {
                  "10:00": {"3-A": "User1", "3-B": "User2"},
                  "14:00": {},
                  "18:00": {}
              }},
-            {"title": "Movie 2", "image_path": r"res\moana.jpeg", "schedule": ["16:00", "20:00"],
-             "seats": {  # Обязательное поле
+            {"title": "Spider man", "image_path": r"res\spider_man.png", "schedule": ["16:00", "20:00"],
+             "seats": {
                  "16:00": {},
                  "20:00": {}
              }},
-            {"title": "Movie 3", "image_path": r"res\moana.jpeg", "schedule": ["15:00", "19:00"],
-             "seats": {  # Обязательное поле
+            {"title": "Solo leveling", "image_path": r"res\solo.png", "schedule": ["15:00", "19:00"],
+             "seats": {
                  "15:00": {},
                  "19:00": {}
              }}
@@ -69,13 +69,11 @@ class AppData:
         if movie is None:
             return False
 
-        # Проверяем, существует ли указанное время в расписании
         if time not in movie["seats"]:
-            return False  # Сеанс с таким временем не найден
+            return False
 
-        # Проверяем, не занято ли место
         if seat in movie["seats"][time]:
-            return False  # Место уже занято
+            return False
 
         movie["seats"][time][seat] = username
         self.users[username]["bookings"].append({
@@ -149,7 +147,6 @@ def add_movie():
     return jsonify({'message': 'Movie added'}), 201
 
 
-# Маршрут для удаления фильма (только для админа)
 @app.route('/movies/<title>', methods=['DELETE'])
 def remove_movie(title):
     if app_data.remove_movie(title):
@@ -157,7 +154,6 @@ def remove_movie(title):
     return jsonify({"error": "Movie not found"}), 404
 
 
-# Маршрут для регистрации пользователя
 @app.route('/register', methods=['POST'])
 def register_user():
     data = request.json
@@ -172,7 +168,6 @@ def register_user():
     return jsonify({'message': f'User {username} registered'})
 
 
-# Маршрут для авторизации пользователя
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
