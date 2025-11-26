@@ -1,16 +1,15 @@
+import requests
 from PyQt5.QtWidgets import (
     QMainWindow, QLabel, QVBoxLayout, QPushButton, QWidget, QLineEdit, QFormLayout, QGroupBox, QMessageBox, QListWidget
 )
 from PyQt5.QtCore import Qt
 
-from res.styles import APP_STYLE
-from user import User
-
 
 class ProfileWindow(QMainWindow):
-    def __init__(self, username, on_logout):
+    def __init__(self, username, on_logout, api_url):
         super().__init__()
         self.username = username
+        self.api_url = api_url
         self.on_logout = on_logout  # Метод для обновления главного окна при выходе
         self.init_ui()
 
@@ -29,9 +28,10 @@ class ProfileWindow(QMainWindow):
         edit_group = QGroupBox("Edit Profile")
         edit_layout = QFormLayout()
 
-        self.username_input = QLineEdit(User.users[self.username]["username"])
-        self.phone_input = QLineEdit(User.users[self.username]["phone"])
-        self.password_input = QLineEdit(User.users[self.username]["password"])
+        self.username_input = QLineEdit(self.username)
+        self.username_input.setEnabled(False)
+        self.phone_input = QLineEdit()
+        self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.Password)
 
         save_button = QPushButton("Save Changes")
@@ -39,7 +39,7 @@ class ProfileWindow(QMainWindow):
         save_button.clicked.connect(self.save_changes)
 
         edit_layout.addRow("Username:", self.username_input)
-        edit_layout.addRow("Phone:", self.phone_input)
+        edit_layout.addRow("Number:", self.phone_input)
         edit_layout.addRow("Password:", self.password_input)
         edit_layout.addRow(save_button)
         edit_group.setLayout(edit_layout)
@@ -49,14 +49,6 @@ class ProfileWindow(QMainWindow):
         history_layout = QVBoxLayout()
 
         self.ticket_list = QListWidget()
-        # Заполняем историю билетов (заглушки для примера)
-        tickets = User.users[self.username].get("tickets", [])
-        if tickets:
-            for ticket in tickets:
-                self.ticket_list.addItem(ticket)
-        else:
-            self.ticket_list.addItem("No tickets purchased yet.")
-
         history_layout.addWidget(self.ticket_list)
         history_group.setLayout(history_layout)
 
@@ -75,29 +67,50 @@ class ProfileWindow(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
+        # Загружаем данные профиля и историю
+        self.load_profile()
+
+    def load_profile(self):
+        """Загружает данные профиля с сервера"""
+        try:
+            response = requests.get(f"{self.api_url}/user/{self.username}")
+            if response.status_code == 200:
+                user_data = response.json()
+                self.phone_input.setText(user_data["number"])
+                self.password_input.setText(user_data["password"])
+                tickets = user_data["bookings"]
+                self.ticket_list.clear()
+                if tickets:
+                    for ticket in tickets:
+                        ticket_info = f"Movie: {ticket['movie_title']}, Time: {ticket['time']}, Seat: {ticket['seat']}"
+                        self.ticket_list.addItem(ticket_info)
+                else:
+                    self.ticket_list.addItem("No tickets purchased yet.")
+            else:
+                QMessageBox.warning(self, "Error", "Failed to load profile data.")
+        except requests.RequestException as e:
+            QMessageBox.critical(self, "Error", f"Failed to connect to the server: {str(e)}")
+
     def save_changes(self):
-        """Сохраняет изменения профиля пользователя"""
-        new_username = self.username_input.text().strip()
+        """Сохраняет изменения профиля пользователя на сервере"""
         new_phone = self.phone_input.text().strip()
         new_password = self.password_input.text().strip()
 
-        if not new_username or not new_phone or not new_password:
+        if not new_phone or not new_password:
             QMessageBox.warning(self, "Error", "All fields are required.")
             return
 
-        if new_username != self.username and new_username in User.users:
-            QMessageBox.warning(self, "Error", f"Username '{new_username}' is already taken.")
-            return
-
-        # Обновляем данные пользователя
-        user_data = User.users.pop(self.username)
-        user_data["username"] = new_username
-        user_data["phone"] = new_phone
-        user_data["password"] = new_password
-        User.users[new_username] = user_data
-
-        self.username = new_username
-        QMessageBox.information(self, "Success", "Profile updated successfully.")
+        try:
+            response = requests.put(
+                f"{self.api_url}/user/{self.username}",
+                json={"number": new_phone, "password": new_password},
+            )
+            if response.status_code == 200:
+                QMessageBox.information(self, "Success", "Profile updated successfully.")
+            else:
+                QMessageBox.warning(self, "Error", "Failed to update profile.")
+        except requests.RequestException as e:
+            QMessageBox.critical(self, "Error", f"Failed to connect to the server: {str(e)}")
 
     def logout(self):
         """Обрабатывает выход пользователя из аккаунта"""

@@ -1,15 +1,14 @@
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
-
 from res.styles import AUTH_STYLE, WELCOME_STYLE
-from user import User
+import requests
 
 
 class LoginDialog(QDialog):
-    def __init__(self, on_success):
+    def __init__(self, api_url, on_success):
         super().__init__()
         self.on_success = on_success
+        self.api_url = api_url
         self.init_ui()
 
     def init_ui(self):
@@ -32,7 +31,6 @@ class LoginDialog(QDialog):
         self.welcome_label.setAlignment(Qt.AlignCenter)
 
         layout = QVBoxLayout()
-
         layout.addWidget(self.welcome_label)
         layout.addWidget(self.username_input)
         layout.addWidget(self.password_input)
@@ -41,11 +39,26 @@ class LoginDialog(QDialog):
         self.setLayout(layout)
 
     def login(self):
-        username = self.username_input.text()
-        password = self.password_input.text()
-        if User.validate_user(username, password):
-            QMessageBox.information(self, "Login", "Welcome back!")
-            self.on_success(username)
-            self.accept()
-        else:
-            QMessageBox.warning(self, "Error", "Invalid username or password.")
+        username = self.username_input.text().strip()
+        password = self.password_input.text().strip()
+
+        if not username or not password:
+            QMessageBox.warning(self, "Error", "Both fields are required.")
+            return
+
+        try:
+            response = requests.post(
+                f"{self.api_url}/login",
+                json={"username": username, "password": password},
+            )
+
+            if response.status_code == 200:
+                QMessageBox.information(self, "Login", "Welcome back!")
+                self.on_success(username)
+                self.accept()
+            elif response.status_code == 401:
+                QMessageBox.warning(self, "Error", "Invalid username or password.")
+            else:
+                QMessageBox.warning(self, "Error", f"Unexpected error: {response.status_code}")
+        except requests.RequestException as e:
+            QMessageBox.critical(self, "Error", f"Failed to connect to the server: {str(e)}")

@@ -1,14 +1,15 @@
+import requests
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
 
 from res.styles import AUTH_STYLE, WELCOME_STYLE
-from user import User  # Убедитесь, что файл user.py существует и корректно импортируется
 
 
 class RegisterDialog(QDialog):
-    def __init__(self, on_success=None):
+    def __init__(self, api_url, on_success=None):
         super().__init__()
         self.on_success = on_success  # Метод вызывается после успешной регистрации
+        self.api_url = api_url
         self.init_ui()
 
     def init_ui(self):
@@ -55,18 +56,25 @@ class RegisterDialog(QDialog):
             QMessageBox.warning(self, "Error", "All fields are required.")
             return
 
-        # Проверяем, что пользователь с таким именем не существует
-        if username in User.users:
-            QMessageBox.warning(self, "Error", f"Username '{username}' is already taken.")
-            return
+        # Отправляем запрос на регистрацию через API
+        try:
+            response = requests.post(
+                f"{self.api_url}/register",
+                json={"username": username, "number": phone, "password": password},
+            )
 
-        # Добавляем пользователя
-        User.add_user(username, phone, password)
-        QMessageBox.information(self, "Register", "Registration successful!")
+            if response.status_code == 200:
+                QMessageBox.information(self, "Register", "Registration successful!")
 
-        # Если передан метод on_success, вызываем его
-        if self.on_success:
-            self.on_success(username)
+                # Если передан метод on_success, вызываем его
+                if self.on_success:
+                    self.on_success(username)
 
-        # Закрываем диалог
-        self.accept()
+                # Закрываем диалог
+                self.accept()
+            elif response.status_code == 400:
+                QMessageBox.warning(self, "Error", response.json().get("error", "Unknown error"))
+            else:
+                QMessageBox.warning(self, "Error", f"Error {response.status_code}: {response.text}")
+        except requests.RequestException as e:
+            QMessageBox.critical(self, "Error", f"Failed to connect to the server: {str(e)}")
